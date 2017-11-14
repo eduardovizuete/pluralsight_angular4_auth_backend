@@ -3,6 +3,7 @@ var cors = require('cors')
 var bodyParser = require( 'body-parser')
 var mongoose = require('mongoose')
 var jwt = require('jwt-simple')
+var bcrypt = require('bcrypt-nodejs')
 var app = express()
 
 var User = require('./models/User.js')
@@ -19,6 +20,28 @@ app.get('/posts', (req, res) => {
     res.send(posts)
 })
 
+app.get('/users', (req, res) => {
+    User.find({}, '-pwd -__v', function (err, users) {
+        if (err) {
+            console.error(err)
+            res.sendStatus(500)
+        }
+        //res.json({users});
+        res.send(users)
+    });
+})
+
+app.get('/profile/:id', (req, res) => {
+    console.log(req.params.id)
+    User.findById(req.params.id, '-pwd -__v', function (err, user) {
+        if (err) {
+            console.error(err)
+            res.sendStatus(500)
+        }
+        res.send(user)
+    });
+})
+
 app.post('/register', (req, res) => {
     console.log(req.body)
     var userData = req.body;
@@ -27,7 +50,7 @@ app.post('/register', (req, res) => {
     
     user.save((err, result) => {
         if (err)
-            console.log('saving user error')
+            console.log('saving user error', err.message)
 
         res.sendStatus(200)
     })
@@ -37,9 +60,9 @@ app.post('/register', (req, res) => {
 
 app.post('/login', (req, res) => {
     console.log(req.body)
-    var userData = req.body;
+    var loginData = req.body;
 
-    User.findOne({email: userData.email}, function (err, dataFind) {
+    User.findOne({email: loginData.email}, function (err, dataFind) {
         if (err) {
             console.log(err)
             return;
@@ -47,16 +70,20 @@ app.post('/login', (req, res) => {
             if(!dataFind) {
                 console.log('Email or Password invalid 1')
                 return res.status(401).send({message: "Email or Password invalid"})
-            } else if (userData.pwd != dataFind.pwd) {
-                console.log('Email or Password invalid 2')
-                return res.status(401).send({message: "Email or Password invalid"})
-            } else {
+            }
+            
+            bcrypt.compare(loginData.pwd, dataFind.pwd, (err, isMatch) => {
+                if (!isMatch){
+                    console.log('Email or Password invalid 2')
+                    return res.status(401).send({message: "Email or Password invalid"})
+                }
+                
                 var payload = {}
                 var token = jwt.encode(payload, '123')
 
                 console.log(dataFind.email + ":" + token)
-                res.status(200).send({token})
-            }       
+                res.status(200).send({token})   
+            })        
         }  
     })
 })
