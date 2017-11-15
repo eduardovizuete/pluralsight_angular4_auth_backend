@@ -5,6 +5,7 @@ var mongoose = require('mongoose')
 var app = express()
 
 var User = require('./models/User.js')
+var Post = require('./models/Post.js')
 var auth = require('./auth.js')
 
 var posts = [
@@ -18,6 +19,20 @@ app.use(bodyParser.json())
 app.get('/posts', (req, res) => {
     res.send(posts)
 })
+
+app.post('/post', (req, res) => {
+    var post = new Post(req.body)
+
+    post.save((err, result) => {
+        if (err) {
+            console.error("saving post error", err.message);
+            return res.status(500).send({message: 'saving post error'})
+        }
+    
+        res.sendStatus(200);
+      });
+})
+
 
 app.get('/users', (req, res) => {
     User.find({}, '-pwd -__v', function (err, users) {
