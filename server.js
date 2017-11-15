@@ -2,6 +2,7 @@ var express = require('express')
 var cors = require('cors')
 var bodyParser = require( 'body-parser')
 var mongoose = require('mongoose')
+var jwt = require('jwt-simple');
 var app = express()
 
 var User = require('./models/User.js')
@@ -23,9 +24,9 @@ app.get('/posts/:id', (req, res) => {
     })
 })
 
-app.post('/post', (req, res) => {
+app.post('/post', auth.checkAuthenticated, (req, res) => {
     var postData = req.body
-    postData.author = '5a0b75a0caead75360d9d1ac'
+    postData.author = req.userId
 
     var post = new Post(postData)
 
@@ -40,7 +41,8 @@ app.post('/post', (req, res) => {
 })
 
 
-app.get('/users', (req, res) => {
+app.get('/users', auth.checkAuthenticated, (req, res) => {
+    console.log(req.userId)
     User.find({}, '-pwd -__v', function (err, users) {
         if (err) {
             console.error(err)
@@ -69,5 +71,5 @@ mongoose.connect('mongodb://test:test@ds259105.mlab.com:59105/pssocial', { useMo
 
 mongoose.Promise = global.Promise;
 
-app.use('/auth', auth)
+app.use('/auth', auth.router)
 app.listen(3000)
