@@ -8,20 +8,26 @@ var User = require('./models/User.js')
 var Post = require('./models/Post.js')
 var auth = require('./auth.js')
 
-var posts = [
-    {message: 'hello'},
-    {message: 'hi'}
-]
-
 app.use(cors())
 app.use(bodyParser.json())
 
-app.get('/posts', (req, res) => {
-    res.send(posts)
+app.get('/posts/:id', (req, res) => {
+    var author = req.params.id
+
+    Post.find({author}, function (err, posts) {
+        if (err) {
+            console.error('Error /post/:id',  err)
+            res.sendStatus(500)
+        }
+        res.send(posts)
+    })
 })
 
 app.post('/post', (req, res) => {
-    var post = new Post(req.body)
+    var postData = req.body
+    postData.author = '5a0b75a0caead75360d9d1ac'
+
+    var post = new Post(postData)
 
     post.save((err, result) => {
         if (err) {
