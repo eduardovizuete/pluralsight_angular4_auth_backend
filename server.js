@@ -72,4 +72,4 @@ mongoose.connect('mongodb://test:test@ds259105.mlab.com:59105/pssocial', { useMo
 mongoose.Promise = global.Promise;
 
 app.use('/auth', auth.router)
-app.listen(3000)
+app.listen(process.env.PORT || 3000)
